@@ -1,0 +1,41 @@
+version: "3.9"
+
+networks:
+  monitoring:
+
+services:
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.51.0
+    container_name: cadvisor
+    networks:
+      - monitoring
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /run/containerd:/run/containerd:ro
+      - /var/lib/containerd:/var/lib/containerd:ro
+    restart: unless-stopped
+
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    privileged: true
+    networks:
+      - monitoring
+    volumes:
+      - .monitoring/scripping_agent/alloy/alloy.yml:/etc/alloy/config.alloy:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /run/containerd:/run/containerd:ro
+      - /var/lib/docker:/var/lib/docker:ro      # REQUIRED
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # REQUIRED
+    command:
+      - run
+      - /etc/alloy/config.alloy
+    ports:
+      - "12345:12345"
+

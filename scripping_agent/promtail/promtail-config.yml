@@ -1,0 +1,94 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+positions:
+  filename: /tmp/positions.yaml
+clients:
+  - url: http://localhost:3100/loki/api/v1/push
+    batchsize: 102400
+    batchwait: 1s
+    backoff_config:
+      min_period: 100ms
+      max_period: 5s
+      max_retries: 5
+    timeout: 10s
+    tenant_id: ""
+scrape_configs:
+  # ===========================
+  # Discovery Service (Prod + UAT)
+  # ===========================
+  - job_name: discovery-server
+    static_configs:
+      # Production logs
+      - targets: ['localhost']
+        labels:
+          app: discovery-server
+          env: production
+          __path__: /tmp/production/discovery-server/logs/**/*.log
+      # UAT logs
+      #      - targets: ['localhost']
+      #        labels:
+      #          app: discovery-server
+      #          env: uat
+      #          __path__: /tmp/uat/discovery-server/logs/discovery-server/**/*.log
+  # ===========================
+  # Other Microservices
+  # ===========================
+  - job_name: feed-generation-service
+    static_configs:
+      - targets: ['localhost']
+        labels:
+          job: feed-generation-service
+          __path__: /tmp/production/feed-generation-service/logs/**/*.log
+  - job_name: content-service
+    static_configs:
+      - targets: ['localhost']
+        labels:
+          job: content-service
+          __path__: /tmp/production/content-service/logs/**/*.log
+  - job_name: customer-service
+    static_configs:
+      - targets: ['localhost']
+        labels:
+          job: customer-service
+          __path__: /tmp/production/customer-service/logs/**/*.log
+  - job_name: authentication-service
+    static_configs:
+      - targets: ['localhost']
+        labels:
+          job: authentication-service
+          __path__: /tmp/production/authentication-service/logs/**/*.log
+  - job_name: api-gateway-service
+    static_configs:
+      - targets: ['localhost']
+        labels:
+          job: api-gateway-service
+          __path__: /tmp/production/api-gateway-service/logs/**/*.log
+  - job_name: feedback-service
+    static_configs:
+      - targets: ['localhost']
+        labels:
+          job: feedback-service
+          __path__: /tmp/production/feedback-service/logs/**/*.log
+  - job_name: notification-service
+    static_configs:
+      - targets: ['localhost']
+        labels:
+          job: notification-service
+          __path__: /tmp/production/notification-service/logs/**/*.log
+    pipeline_stages:
+      - match:
+          selector: '{job=~".*"}'
+          stages:
+            - json:
+                expressions:
+                  level: level
+                  message: message
+            - labels:
+                level:
+    relabel_configs:
+      - source_labels: ['__path__']
+        regex: '/logs/([^/]+)/.*'
+        target_label: service
+limits_config:
+  max_streams: 1000

@@ -1,0 +1,41 @@
+
+// ===============================
+// 2. Collect HOST metrics (CPU, Memory, Disk, Load, Network)
+// ===============================
+prometheus.exporter.unix "node" {}
+
+// ===============================
+// 3. Send ALL metrics to Prometheus
+// ===============================
+prometheus.remote_write "prom" {
+  endpoint {
+    url = "http://prometheus:9090/api/v1/write"
+  }
+}
+// ===============================
+// 6. Relabel HOST metrics (node)
+// ===============================
+prometheus.relabel "node_labels" {
+  forward_to = [prometheus.remote_write.prom.receiver]
+
+  rule {
+    target_label = "job"
+    replacement = "node-exporter"
+    action = "replace"
+  }
+  rule {
+    target_label = "instance"
+    replacement = "sanghpal-tayde"
+    action = "replace"
+  }
+}
+
+// ===============================
+// 7. Scrape HOST metrics (send → relabel → Prometheus)
+// ===============================
+prometheus.scrape "node_scrape" {
+  targets = prometheus.exporter.unix.node.targets
+  forward_to = [prometheus.relabel.node_labels.receiver]
+}
+
+
