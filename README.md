@@ -88,7 +88,7 @@ targets: ['localhost:9100']
 
 ✅ CORRECT:
 
-targets: ['172.31.10.170:9100']
+targets: ['<server:ip>:9100']
 
 
 📌 Because in cloud & Docker, localhost means inside container, not host machine.
@@ -105,7 +105,7 @@ targets: ['localhost:9100']
 
 ✅ CORRECT:
 
-targets: ['172.31.10.170:9100']
+targets: ['<server-ip>:9100']
 
 
 📌 Because in cloud & Docker, localhost means inside container, not host machine.
